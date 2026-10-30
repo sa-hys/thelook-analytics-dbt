@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: thelook
+    database: dbt-practice-511602
+    schema: raw_thelook
+    tables:
+      - name: orders
+      - name: order_items
+      - name: products
+      - name: users

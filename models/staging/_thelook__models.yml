@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: stg_thelook__order_items
+    description: "明細テーブル。1行が1明細。"
+    columns:
+      - name: order_item_id
+        description: "明細ID"
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        data_tests:
+          - relationships:
+              arguments: 
+                to: ref('stg_thelook__orders')
+                field: order_id      
+      - name: product_id
+        data_tests:
+          - relationships:
+              arguments: 
+                to: ref('stg_thelook__products')
+                field: product_id    
+
+  - name: stg_thelook__orders
+    description: "注文テーブル。1行が1注文。"
+    columns:
+      - name: order_id
+        description: "注文ID"
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        data_tests:
+          - relationships:
+              arguments: 
+                to: ref('stg_thelook__users')
+                field: user_id
+
+  - name: stg_thelook__products
+    description: "商品マスタ。1行が1商品。"
+    columns:
+      - name: product_id
+        description: "商品ID（元データの id）"
+        data_tests:
+          - unique
+          - not_null  

@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: fct_order_items
+    description: |
+      ### 何のための表か
+      注文の明細（1行が商品1点）ごとの、集計用のファクトテーブルです。
+      ユーザーの国や商品名を、あらかじめ横に持たせています。
+      結合せずに、月別・国別の販売額や、商品別の出荷数を集計できます。
+
+      ### 1行が表すもの
+      注文の明細1つ（元データ `order_items` の1行）。主キーは `order_item_id` です。
+
+      ### 定義
+      - 月は、日本時間（JST）で数えます。元の時刻（UTC）は `orders_created_at` に残しています。
+      - `shipped` は、出荷済みで、返品されていないものが 1、それ以外が 0 です。
+      - `order_items_status` は、注文ではなく、明細の状態です。値は Cancelled、Complete、Processing、Returned、Shipped です。
+      - この表では、行を絞り込みません。全部の状態の行を残しています。販売額を数えるときは、集計する側で Complete に絞ります。
+
+      ### 使い方の約束
+      - 月で絞るときは、`order_month_jst` の条件を必ず書いてください。パーティションの列なので、読む量が減ります。`orders_created_at_jst` だけで絞っても、減りません。
+      - 状態だけで絞るクエリは、クラスタリングの先頭の列を飛ばすので、最適化されにくくなります。
+
+      ### 作り方と更新
+      - 元データ（thelook_ecommerce）から、`users`、`orders`、`products`、`order_items` を結合して作っています。
+      - ユーザーの国と商品名は、横持ちです。属性の正は、元の `users` と `products` の1か所です。
+      - 本番では、毎日1回、全件を作り直します。
+    columns:
+      - name: order_item_id
+        description: "明細ID（主キー）"
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: "注文ID。1つの注文に、複数の明細があります。"
+      - name: orders_created_at
+        description: "注文日時（UTC。元データのまま）"
+      - name: orders_created_at_jst
+        description: "注文日時（日本時間）。クラスタリングの1番目の列です。"
+      - name: order_month_jst
+        description: "注文日の月の初日（日本時間）。パーティションの列です。"
+      - name: user_id
+        description: "ユーザーID"
+      - name: country
+        description: "ユーザーの国（元データ users の country）"
+      - name: product_id
+        description: "商品ID"
+      - name: product_name
+        description: "商品名（元データ products の product_name）"
+      - name: order_items_status
+        description: "明細の状態。クラスタリングの2番目の列です。"
+      - name: shipped
+        description: "出荷済みで返品されていなければ 1、それ以外は 0"
+      - name: sale_price
+        description: "明細の販売価格（元データの sale_price）"
