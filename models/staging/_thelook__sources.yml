@@ -2,10 +2,17 @@ version: 2
 
 sources:
   - name: thelook
+    description: |
+      BigQuery の公開データ `bigquery-public-data.thelook_ecommerce`（プログラムで生成された、架空の衣料品 EC サイトのデータ）を、自分の BigQuery の `raw_thelook` にコピーしたものです。
+      コピーは、BigQuery のスケジュールされたクエリで、4テーブルを全件入れ替えて作っています。
     database: dbt-practice-511602
     schema: raw_thelook
     tables:
       - name: orders
+        description: "注文。1行が1注文。"
       - name: order_items
+        description: "注文の明細。1行が1明細。"
       - name: products
+        description: "商品マスタ。1行が1商品。"
       - name: users
+        description: "ユーザーマスタ。1行が1ユーザー。"
