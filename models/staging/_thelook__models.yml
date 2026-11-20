@@ -2,46 +2,102 @@ version: 2
 
 models:
   - name: stg_thelook__order_items
-    description: "明細テーブル。1行が1明細。"
+    description: |
+      元データ `order_items`（注文の明細）を整えた staging モデルです。1行が1明細です。
+      使う列だけを選び、`id` を `order_item_id` に改名しています。行の絞り込み、結合、集計はしていません。
     columns:
       - name: order_item_id
-        description: "明細ID"
+        description: "明細ID（元データの id）。主キー。"
         data_tests:
           - unique
           - not_null
       - name: order_id
+        description: "注文ID。1つの注文に、複数の明細があります。"
         data_tests:
           - relationships:
-              arguments: 
+              arguments:
                 to: ref('stg_thelook__orders')
-                field: order_id      
+                field: order_id
+      - name: user_id
+        description: "ユーザーID"
       - name: product_id
+        description: "商品ID"
         data_tests:
           - relationships:
-              arguments: 
+              arguments:
                 to: ref('stg_thelook__products')
-                field: product_id    
+                field: product_id
+      - name: inventory_item_id
+        description: "在庫アイテムのID（元データのまま。このプロジェクトでは使っていません）"
+      - name: created_at
+        description: "明細の作成日時（UTC。元データのまま）"
+      - name: status
+        description: "明細の状態。値は Cancelled、Complete、Processing、Returned、Shipped（先頭は大文字）。注文（orders）の status とは別の列です。"
+      - name: shipped_at
+        description: "出荷日時（UTC）。空（NULL）のものは、fct_order_items の shipped 列で、出荷されていない扱いにしています。"
+      - name: returned_at
+        description: "返品日時（UTC）。空（NULL）でないものは、fct_order_items の shipped 列で、返品された扱いにしています。"
+      - name: sale_price
+        description: "明細の販売価格（元データのまま。単位は元データに記載がありません）"
 
   - name: stg_thelook__orders
-    description: "注文テーブル。1行が1注文。"
+    description: |
+      元データ `orders`（注文）を整えた staging モデルです。1行が1注文です。
+      使う列だけを選び、`num_of_item` を `item_count` に改名しています。
     columns:
       - name: order_id
-        description: "注文ID"
+        description: "注文ID。主キー。"
         data_tests:
           - unique
           - not_null
       - name: user_id
+        description: "ユーザーID"
         data_tests:
           - relationships:
-              arguments: 
+              arguments:
                 to: ref('stg_thelook__users')
                 field: user_id
+      - name: status
+        description: "注文の状態（元データの status）。明細の状態（order_items の status）とは別の列です。"
+      - name: created_at
+        description: "注文日時（UTC。元データのまま）"
+      - name: item_count
+        description: "注文に含まれる商品の点数（元データの num_of_item）"
 
   - name: stg_thelook__products
-    description: "商品マスタ。1行が1商品。"
+    description: |
+      元データ `products`（商品マスタ）を整えた staging モデルです。1行が1商品です。
+      使う列だけを選び、`id` を `product_id` に、`name` を `product_name` に改名しています。
     columns:
       - name: product_id
-        description: "商品ID（元データの id）"
+        description: "商品ID（元データの id）。主キー。"
         data_tests:
           - unique
-          - not_null  
+          - not_null
+      - name: category
+        description: "商品のカテゴリ（元データのまま）"
+      - name: brand
+        description: "商品のブランド（元データのまま）"
+      - name: product_name
+        description: "商品名（元データの name）"
+      - name: cost
+        description: "商品のコスト（元データの cost。単位は元データに記載がありません）"
+
+  - name: stg_thelook__users
+    description: |
+      元データ `users`（ユーザーマスタ）を整えた staging モデルです。1行が1ユーザーです。
+      使う列だけを選び、`id` を `user_id` に改名し、姓と名をつないだ `user_name` を作っています。
+    columns:
+      - name: user_id
+        description: "ユーザーID（元データの id）。主キー。"
+        data_tests:
+          - unique
+          - not_null
+      - name: user_name
+        description: "姓と名を、半角スペースでつないだもの。BigQuery の CONCAT は、引数に NULL があると全体が NULL になります（取り込み時点では、姓・名に NULL はないことを確認しています）。"
+      - name: gender
+        description: "性別（元データのまま）"
+      - name: country
+        description: "ユーザーの国（元データのまま）。fct_order_items に、横持ちで持たせています。"
+      - name: created_at
+        description: "ユーザーの作成日時（UTC。元データのまま）"
