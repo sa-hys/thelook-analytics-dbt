@@ -24,7 +24,7 @@ models:
       ### 作り方と更新
       - 元データ（thelook_ecommerce）から、`users`、`orders`、`products`、`order_items` を結合して作っています。
       - ユーザーの国と商品名は、横持ちです。属性の正は、元の `users` と `products` の1か所です。
-      - 本番では、毎日1回、全件を作り直します。
+      - 本番では、2026年10月19日〜11月19日の間、毎日1回、全件を作り直していました（現在は停止しています）。
     columns:
       - name: order_item_id
         description: "明細ID（主キー）"
